@@ -2,12 +2,12 @@ import type { IConfig } from '@/types'
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { createJiti } from 'jiti'
-import { CACHE_FOLDER_NAME, CACHE_TOKEN_FILE_PATH } from '@/constant.ts'
+import { CACHE_FOLDER_NAME } from '@/constant.ts'
 import { createDir } from '@/utils.ts'
 
 export const setToken = async (config: IConfig, token: string): Promise<void> => {
     createDir(resolve(config.cwd, CACHE_FOLDER_NAME))
-    await writeFile(resolve(config.cwd, CACHE_TOKEN_FILE_PATH), `export default "${token}"`)
+    await writeFile(config.tokenFile, `export default "${token}"`)
 }
 
 export const loaderToken = async (config: IConfig): Promise<string> => {

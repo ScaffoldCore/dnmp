@@ -1,7 +1,6 @@
-import { writeFile } from 'node:fs/promises'
 import cac from 'cac'
 import { resolveConfig } from '@/config.ts'
-import { loaderToken } from '@/token.ts'
+import { loaderToken, setToken } from '@/token.ts'
 import { printWarning } from '@/utils.ts'
 import { name, version } from '../package.json'
 
@@ -27,7 +26,7 @@ cli.command('set <token>', 'Set the local release Token')
     .action(async (token: string = '') => {
         try {
             const config = await resolveConfig()
-            await writeFile(config.tokenFile, `export default "${token}"`)
+            await setToken(config, token)
         }
         catch (error: any) {
             printWarning(error.message)
