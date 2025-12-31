@@ -29,8 +29,9 @@ cli.command('set <token>', 'Set the local release Token')
             const config = await resolveConfig()
             await writeFile(config.tokenFile, `export default "${token}"`)
         }
-        catch (error) {
-            console.log(error)
+        catch (error: any) {
+            printWarning(error.message)
+            process.exit(1)
         }
     })
 
