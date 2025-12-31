@@ -37,16 +37,19 @@
         "access": "public"
     },
     "dependencies": {
+        "boxen": "^8.0.1",
         "cac": "^6.7.14",
         "defu": "^6.1.4",
         "find-up": "^8.0.0",
         "glob": "^13.0.0",
-        "jiti": "^2.6.1"
+        "jiti": "^2.6.1",
+        "semver": "^7.7.3"
     },
     "devDependencies": {
         "@antfu/eslint-config": "^6.7.3",
         "@lonewolfyx/tsconfig": "^0.0.6",
         "@types/node": "^25.0.3",
+        "@types/semver": "^7.7.1",
         "eslint": "^9.39.2",
         "lint-staged": "^16.2.7",
         "picocolors": "^1.1.1",
