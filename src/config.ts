@@ -1,9 +1,15 @@
 import type { IConfig } from '@/types'
-import path from 'node:path'
+import path, { resolve } from 'node:path'
 import process from 'node:process'
+import { CACHE_TOKEN_FILE_PATH } from '@/constant.ts'
 
-export const resolveConfig = (cwd: string): IConfig => {
+export const resolveConfig = async (cwd: string): Promise<IConfig> => {
+    const cwdPath = cwd ? path.resolve(cwd) : process.cwd()
+    const tokenPath = resolve(cwdPath, `${CACHE_TOKEN_FILE_PATH}`)
+
     return {
-        cwd: cwd ? path.resolve(cwd) : process.cwd(),
+        cwd: cwdPath,
+        tokenFile: tokenPath,
+        token: '',
     }
 }
