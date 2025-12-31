@@ -18,8 +18,12 @@ cli.command('')
         // await setToken(config, 'asdasdasd')
         // console.log(await loaderToken(config))
 
-        // TODO runCommadn
-        // TODO ➜ npm publish --//registry.npmjs.org/:_authToken=${token} --access public
+        console.log('npm', [
+            'publish',
+            `--//registry.npmjs.org/:_authToken=${config.token}`,
+            '--access',
+            'public',
+        ])
     })
 
 cli.command('set <token>', 'Set the local release Token')
