@@ -1,7 +1,10 @@
+import { intro, outro } from '@clack/prompts'
 import cac from 'cac'
+import pc from 'picocolors'
 import { resolveConfig } from '@/config.ts'
 import { loaderToken, setToken } from '@/token.ts'
 import { printWarning } from '@/utils.ts'
+import { promptForNewVersion } from '@/version.ts'
 import { name, version } from '../package.json'
 
 const cli = cac(name)
@@ -18,12 +21,18 @@ cli.command('')
         // await setToken(config, 'asdasdasd')
         // console.log(await loaderToken(config))
 
+        intro(pc.bgCyan(` dnmp ${version} `))
+
+        await promptForNewVersion(config)
+
         console.log('npm', [
             'publish',
             `--//registry.npmjs.org/:_authToken=${config.token}`,
             '--access',
             'public',
-        ])
+        ].join(' '))
+
+        outro('Done.')
     })
 
 cli.command('set <token>', 'Set the local release Token')
