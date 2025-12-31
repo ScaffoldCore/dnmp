@@ -6,14 +6,11 @@ import { name, version } from '../package.json'
 const cli = cac(name)
 
 cli.command('')
-    .option('-c,--cwd', 'Specify the working directory', { default: process.cwd() })
-    .action(async (options: {
-        c?: string
-        cwd?: string
-    }) => {
-        const config = await resolveConfig(options.cwd)
+    .action(async (options) => {
+        const config = await resolveConfig()
         config.token = await loaderToken(config)
         console.log(config)
+        console.log(import.meta)
         // await setToken(config, 'asdasdasd')
         // console.log(await loaderToken(config))
     })
