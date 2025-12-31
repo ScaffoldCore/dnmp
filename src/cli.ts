@@ -1,6 +1,8 @@
+import { writeFile } from 'node:fs/promises'
 import cac from 'cac'
 import { resolveConfig } from '@/config.ts'
 import { loaderToken } from '@/token.ts'
+import { printWarning } from '@/utils.ts'
 import { name, version } from '../package.json'
 
 const cli = cac(name)
@@ -21,6 +23,24 @@ cli.command('')
         // TODO ➜ npm publish --//registry.npmjs.org/:_authToken=${token} --access public
     })
 
+cli.command('set <token>', 'Set the local release Token')
+    .action(async (token: string = '') => {
+        try {
+            const config = await resolveConfig()
+            await writeFile(config.tokenFile, `export default "${token}"`)
+        }
+        catch (error) {
+            console.log(error)
+        }
+    })
+
 cli.help()
 cli.version(version)
-cli.parse()
+
+try {
+    cli.parse()
+}
+catch (error: any) {
+    printWarning(error.message)
+    process.exit(1)
+}
