@@ -29,6 +29,9 @@ importers:
       semver:
         specifier: ^7.7.3
         version: 7.7.3
+      tinyexec:
+        specifier: ^1.0.2
+        version: 1.0.2
     devDependencies:
       '@antfu/eslint-config':
         specifier: ^6.7.3
