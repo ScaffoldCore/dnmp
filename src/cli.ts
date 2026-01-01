@@ -4,7 +4,6 @@ import pc from 'picocolors'
 import { resolveConfig } from '@/config.ts'
 import { setToken } from '@/token.ts'
 import { printWarning } from '@/utils.ts'
-import { promptForNewVersion } from '@/version.ts'
 import { name, version } from '../package.json'
 
 const cli = cac(name)
@@ -25,7 +24,7 @@ cli.command('')
         // TODO 获取老的版本号
 
         // TODO 获取新的版本号
-        await promptForNewVersion(config)
+        // await promptForNewVersion(config)
 
         console.log('npm', [
             'publish',
