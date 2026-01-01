@@ -23,6 +23,9 @@ cli.command('')
 
         intro(pc.bgCyan(` dnmp ${version} `))
 
+        // TODO 获取老的版本号
+
+        // TODO 获取新的版本号
         await promptForNewVersion(config)
 
         console.log('npm', [
@@ -31,6 +34,11 @@ cli.command('')
             '--access',
             'public',
         ].join(' '))
+
+        // TODO 更新 package.json 相应版本号
+        // TODO 提交 Git Commits release 信息
+        // TODO 创建 Git tag
+        // TODO 发布 NPM
 
         // await runCommand(config, 'npm', [
         //     'publish',
