@@ -30,18 +30,17 @@ const defaultConfig: IConfigOptions = {
 export const isMonorepo = async (
     config: IConfigOptions,
 ): Promise<IConfigOptions['monorepo']> => {
-    let path = await findUp('pnpm-workspace.yaml', {
+    const path = await findUp('pnpm-workspace.yaml', {
         cwd: config.cwd,
     }) as string
 
-    const is = !!path
+    const workspaceYaml = path ? parse(readFileSync(path, 'utf-8')) : { packages: [] }
 
-    if (!is)
-        path = ''
+    const is = !!workspaceYaml?.packages.length
 
     return {
         is,
-        path,
+        path: path || '',
     }
 }
 
