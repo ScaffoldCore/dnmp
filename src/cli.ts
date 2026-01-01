@@ -4,6 +4,7 @@ import pc from 'picocolors'
 import { resolveConfig } from '@/config.ts'
 import { setToken } from '@/token.ts'
 import { printWarning } from '@/utils.ts'
+import { getCurrentVersion } from '@/version/current.ts'
 import { name, version } from '../package.json'
 
 const cli = cac(name)
@@ -14,15 +15,12 @@ const cli = cac(name)
 cli.command('')
     .action(async (options) => {
         const config = await resolveConfig()
-        console.log(config)
-        console.log(import.meta)
-        // await setToken(config, 'asdasdasd')
-        // console.log(await loaderToken(config))
 
         intro(pc.bgCyan(` dnmp ${version} `))
 
         // TODO 获取老的版本号
-
+        await getCurrentVersion(config)
+        console.log(config)
         // TODO 获取新的版本号
         // await promptForNewVersion(config)
 
