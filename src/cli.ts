@@ -2,7 +2,6 @@ import { intro, outro } from '@clack/prompts'
 import cac from 'cac'
 import pc from 'picocolors'
 import { resolveConfig } from '@/config.ts'
-import { runCommand } from '@/runCommand.ts'
 import { loaderToken, setToken } from '@/token.ts'
 import { printWarning } from '@/utils.ts'
 import { promptForNewVersion } from '@/version.ts'
@@ -33,12 +32,12 @@ cli.command('')
             'public',
         ].join(' '))
 
-        await runCommand(config, 'npm', [
-            'publish',
-            `--//registry.npmjs.org/:_authToken=${config.token}`,
-            '--access',
-            'public',
-        ])
+        // await runCommand(config, 'npm', [
+        //     'publish',
+        //     `--//registry.npmjs.org/:_authToken=${config.token}`,
+        //     '--access',
+        //     'public',
+        // ])
 
         outro('Done.')
     })
