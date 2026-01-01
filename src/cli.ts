@@ -2,7 +2,7 @@ import { intro, outro } from '@clack/prompts'
 import cac from 'cac'
 import pc from 'picocolors'
 import { resolveConfig } from '@/config.ts'
-import { loaderToken, setToken } from '@/token.ts'
+import { setToken } from '@/token.ts'
 import { printWarning } from '@/utils.ts'
 import { promptForNewVersion } from '@/version.ts'
 import { name, version } from '../package.json'
@@ -15,7 +15,6 @@ const cli = cac(name)
 cli.command('')
     .action(async (options) => {
         const config = await resolveConfig()
-        config.token = await loaderToken(config)
         console.log(config)
         console.log(import.meta)
         // await setToken(config, 'asdasdasd')

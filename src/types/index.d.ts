@@ -1,6 +1,13 @@
-export interface IConfig {
-    cwd: string
+export interface IConfigOptions {
     root: string
-    tokenFile: string
-    token: string
+    cwd: string
+    token: {
+        name: string
+        file: string
+        value: string
+    }
+    release: string
+    currentVersion: string
+    monorepo: boolean
+    packages: string | string[]
 }

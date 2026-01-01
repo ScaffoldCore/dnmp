@@ -39,6 +39,7 @@
     "dependencies": {
         "@clack/prompts": "^0.11.0",
         "boxen": "^8.0.1",
+        "c12": "^3.3.3",
         "cac": "^6.7.14",
         "defu": "^6.1.4",
         "find-up": "^8.0.0",
