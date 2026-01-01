@@ -64,7 +64,7 @@ export const resolveConfig = async (): Promise<IConfigOptions> => {
     // loader monorepo packages name and path, if is
     if (config.monorepo.is) {
         const packages = parse(readFileSync(config.monorepo.path, 'utf-8'))
-        console.log('asdasd', packages.packages)
+
         config.packages = packages.packages.map(
             (item: string) =>
                 item.indexOf('*')
