@@ -1,7 +1,9 @@
 import type { IConfigOptions } from '@/types'
+import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import * as process from 'node:process'
 import { findUp } from 'find-up'
+import { parse } from 'yaml'
 import { CACHE_TOKEN_FILE_PATH } from '@/constant.ts'
 import { loaderToken } from '@/token.ts'
 import { name } from '../package.json'
@@ -58,6 +60,21 @@ export const resolveConfig = async (): Promise<IConfigOptions> => {
     config.token.value = await loaderToken(config) || ''
 
     config.monorepo = await isMonorepo(config)
+
+    // loader monorepo packages name and path, if is
+    if (config.monorepo.is) {
+        const packages = parse(readFileSync(config.monorepo.path, 'utf-8'))
+        console.log('asdasd', packages.packages)
+        config.packages = packages.packages.map(
+            (item: string) =>
+                item.indexOf('*')
+                    ? `${item.replace('/*', '')}/**/package.json`
+                    : `${item}/**/package.json`,
+        )
+    }
+    else {
+        config.packages = resolve(config.cwd, 'package.json')
+    }
 
     return config
 }
