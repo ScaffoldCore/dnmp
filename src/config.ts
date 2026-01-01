@@ -1,6 +1,7 @@
 import type { IConfigOptions } from '@/types'
 import { resolve } from 'node:path'
 import * as process from 'node:process'
+import { findUp } from 'find-up'
 import { CACHE_TOKEN_FILE_PATH } from '@/constant.ts'
 import { loaderToken } from '@/token.ts'
 import { name } from '../package.json'
@@ -17,8 +18,29 @@ const defaultConfig: IConfigOptions = {
     },
     release: '',
     currentVersion: '',
-    monorepo: false,
+    monorepo: {
+        is: false,
+        path: '',
+    },
     packages: '',
+}
+
+export const isMonorepo = async (
+    config: IConfigOptions,
+): Promise<IConfigOptions['monorepo']> => {
+    let path = await findUp('pnpm-workspace.yaml', {
+        cwd: config.cwd,
+    }) as string
+
+    const is = !!path
+
+    if (!is)
+        path = ''
+
+    return {
+        is,
+        path,
+    }
 }
 
 export const resolveConfig = async (): Promise<IConfigOptions> => {
@@ -34,6 +56,8 @@ export const resolveConfig = async (): Promise<IConfigOptions> => {
     }))
 
     config.token.value = await loaderToken(config) || ''
+
+    config.monorepo = await isMonorepo(config)
 
     return config
 }

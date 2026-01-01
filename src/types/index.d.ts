@@ -8,6 +8,9 @@ export interface IConfigOptions {
     }
     release: string
     currentVersion: string
-    monorepo: boolean
+    monorepo: {
+        is: boolean
+        path: string
+    }
     packages: string | string[]
 }
