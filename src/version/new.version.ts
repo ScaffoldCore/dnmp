@@ -127,7 +127,7 @@ export const promptForNewVersion = async (config: IConfigOptions): Promise<strin
         const custom = await text({
             message: 'Enter the new version number',
             validate: val => !validateVersion(val) ? 'Invalid semver' : undefined,
-        })
+        }) as string
 
         if (isCancel(custom)) {
             cancel('No version entered')
@@ -141,5 +141,5 @@ export const promptForNewVersion = async (config: IConfigOptions): Promise<strin
     }
 
     console.log(`${pc.green('✔')} New version: ${pc.cyan(finalVersion)}`)
-    return finalVersion
+    config.release = finalVersion
 }

@@ -1,12 +1,13 @@
+import { readFile, writeFile } from 'node:fs/promises'
 import * as process from 'node:process'
-import { intro, outro } from '@clack/prompts'
+import { confirm, intro, outro } from '@clack/prompts'
 import cac from 'cac'
 import pc from 'picocolors'
 import { resolveConfig } from '@/config.ts'
 import { setToken } from '@/token.ts'
-import { printWarning } from '@/utils.ts'
-import { promptForNewVersion } from '@/version.ts'
+import { isCancelProcess, printWarning } from '@/utils.ts'
 import { getCurrentVersion } from '@/version/current.ts'
+import { promptForNewVersion } from '@/version/new.version'
 import { name, version } from '../package.json'
 
 const cli = cac(name)
@@ -37,7 +38,25 @@ cli.command('')
             'public',
         ].join(' '))
 
+        const isConfirmUpdate = await confirm({
+            message: '是否确认更新 package.json ?',
+            initialValue: true,
+        })
+
+        isCancelProcess(isConfirmUpdate)
+
+        if (!isConfirmUpdate) {
+            outro('用户取消操作，后续进程停止')
+            return process.exit(0)
+        }
+
         // TODO 更新 package.json 相应版本号
+        const updatePackage = JSON.parse(await readFile(config.packages as string, 'utf-8'))
+        updatePackage.version = config.release as string
+
+        console.log(updatePackage)
+        await writeFile(config.packages as string, JSON.stringify(updatePackage, null, 2))
+
         // TODO 提交 Git Commits release 信息
         // TODO 创建 Git tag
         // TODO 发布 NPM
