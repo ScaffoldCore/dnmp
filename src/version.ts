@@ -1,4 +1,5 @@
-import type { IConfigOptions, VersionResult } from '@/types'
+import type { releaseType, ReleaseTypes } from '@/release-type.ts'
+import type { IConfigOptions } from '@/types'
 import { cancel, isCancel, select, text } from '@clack/prompts'
 import pc from 'picocolors'
 import semver from 'semver'
@@ -9,145 +10,138 @@ import { CUSTOM_RELEASE_PREFIX } from '@/constant.ts'
 const PADDING = 13
 export const validateVersion = (version: string) => !!semver.valid(version)
 
-export const getNextVersions = (version: string): VersionResult => {
+interface UIStyle {
+    label: string
+    color: (t: string) => string
+}
+
+const DEFAULT_STYLE: UIStyle = { label: 'next', color: pc.cyan }
+
+const UI_STYLE_MAP: Record<string, UIStyle> = {
+    major: { label: 'major', color: pc.cyan },
+    minor: { label: 'minor', color: pc.cyan },
+    patch: { label: 'patch', color: pc.cyan },
+    next: { label: 'next', color: pc.cyan },
+    rc: { label: 'rc', color: pc.green },
+    beta: { label: 'pre-beta', color: pc.magenta },
+    alpha: { label: 'alpha', color: pc.yellow },
+}
+
+// --- 工具函数 ---
+
+/**
+ * 核心逻辑：增量处理预发布版本
+ * 解决 TS2345: 使用 readonly 修饰符接受 semver 的返回类型
+ */
+const processIncrementalPre = (preParts: readonly (string | number)[], base: string, prefix: string, expectedLen: number, fallback: string): string => {
+    if (preParts[0] !== prefix) {
+        return `${base}-${fallback}`
+    }
+
+    const newPre = [...preParts].slice(0, expectedLen)
+    while (newPre.length < expectedLen) {
+        newPre.push(0)
+    }
+
+    const lastIdx = expectedLen - 1
+    const lastVal = newPre[lastIdx]
+    const numericVal = typeof lastVal === 'number' ? lastVal : Number.parseInt(String(lastVal), 10)
+
+    const isExtension = preParts.length < expectedLen
+    // 逻辑：如果是补位产生的 0，则起始为 1；如果是已有的数字，则递增
+    newPre[lastIdx] = isExtension ? 1 : (Number.isNaN(numericVal) ? 1 : numericVal + 1)
+
+    return `${base}-${newPre.join('.')}`
+}
+
+export const getNextVersions = (version: string): ReleaseTypes => {
     const s = semver.parse(version)
     if (!s)
         throw new Error(`[Invalid SemVer]: ${version}`)
 
-    const { major: M, minor: m, patch: p, prerelease: preParts } = s
+    const { major: M, minor: m, patch: p, prerelease: pre } = s
     const base = `${M}.${m}.${p}`
-
-    /**
-     * 完美的层级处理逻辑
-     * 支持 alpha.3 -> alpha.3.0.1 (跨级补零)
-     */
-    const processIncrementalPre = (prefix: string, expectedLen: number, fallback: string): string => {
-        // 1. 检查前缀是否匹配
-        if (preParts[0] === prefix) {
-            const newPre = [...preParts]
-
-            // 2. 如果当前层级太深（超过目标长度），则截断到目标长度
-            if (newPre.length > expectedLen) {
-                newPre.length = expectedLen
-            }
-
-            // 3. 填充缺失的中间层级为 0
-            while (newPre.length < expectedLen) {
-                newPre.push(0)
-            }
-
-            // 4. 对最后一位进行处理
-            const lastIdx = expectedLen - 1
-            const lastVal = newPre[lastIdx]
-            const numericVal = typeof lastVal === 'number' ? lastVal : Number.parseInt(String(lastVal), 10)
-
-            if (!Number.isNaN(numericVal)) {
-                // 如果原本长度就够，说明是同级，最后一位 +1
-                // 如果原本长度不够（是补出来的 0），则按照规则最后一位应该是 1
-                // 但根据你的预期 alpha.3 -> alpha.3.0.1，这里补齐后最后一位设为 1 是最准确的
-                const isExtension = preParts.length < expectedLen
-                newPre[lastIdx] = isExtension ? 1 : numericVal + 1
-
-                return `${base}-${newPre.join('.')}`
-            }
-        }
-
-        // 前缀不匹配，直接返回初始定义的 fallback
-        return `${base}-${fallback}`
-    }
 
     return {
         'major': `${M + 1}.0.0`,
         'minor': `${M}.${m + 1}.0`,
         'patch': `${M}.${m}.${p + 1}`,
         'next': `${M}.${m}.${p + 1}`,
-        'rc': processIncrementalPre('rc', 2, 'rc.1'),
-        'beta-major': processIncrementalPre('beta', 2, 'beta.1'),
-        'beta-minor': processIncrementalPre('beta', 3, 'beta.0.1'),
-        'beta-patch': processIncrementalPre('beta', 4, 'beta.0.0.1'),
+        'rc': processIncrementalPre(pre, base, 'rc', 2, 'rc.1'),
+        'beta-major': processIncrementalPre(pre, base, 'beta', 2, 'beta.1'),
+        'beta-minor': processIncrementalPre(pre, base, 'beta', 3, 'beta.0.1'),
+        'beta-patch': processIncrementalPre(pre, base, 'beta', 4, 'beta.0.0.1'),
         'pre-beta': `${base}-beta`,
         'alpha-beta': `${base}-alpha.beta`,
-        'alpha-major': processIncrementalPre('alpha', 2, 'alpha.1'),
-        'alpha-minor': processIncrementalPre('alpha', 3, 'alpha.0.1'),
-        'alpha-patch': processIncrementalPre('alpha', 4, 'alpha.0.0.1'),
+        'alpha-major': processIncrementalPre(pre, base, 'alpha', 2, 'alpha.1'),
+        'alpha-minor': processIncrementalPre(pre, base, 'alpha', 3, 'alpha.0.1'),
+        'alpha-patch': processIncrementalPre(pre, base, 'alpha', 4, 'alpha.0.0.1'),
     }
 }
 
-export const promptForNewVersion = async (config: IConfigOptions) => {
-    let custom: string = ''
-
-    console.log('current version', config.currentVersion)
+export const promptForNewVersion = async (config: IConfigOptions): Promise<string | void> => {
     const next = getNextVersions(config.currentVersion)
-    console.log(next)
 
-    const beta = pc.magenta('beta')
-    const alpha = pc.yellow('alpha')
+    // 动态生成选项
+    const options = (Object.keys(next) as releaseType[]).map((key) => {
+        const versionStr = next[key]
+
+        // 1. 获取前缀（如 'alpha'）
+        const prefix = key.split('-')[0] ?? 'next'
+
+        // 2. 彻底解决 TS18048: 即使 prefix 在 Map 里，TS 仍认为可能返回 undefined
+        // 使用空值合并运算符 (??) 确保 style 永远是 UIStyle 类型
+        const style = UI_STYLE_MAP[prefix] ?? DEFAULT_STYLE
+
+        const label = style.label.padStart(PADDING, ' ')
+
+        // 渲染版本颜色，同样处理关键字匹配的安全性
+        const coloredVersion = versionStr.replace(/(rc|beta|alpha)/g, (match) => {
+            const matchStyle = UI_STYLE_MAP[match] ?? DEFAULT_STYLE
+            return matchStyle.color(match)
+        })
+
+        return {
+            value: key as string,
+            label: `${label} ${coloredVersion}`,
+        }
+    })
+
+    options.push({
+        value: CUSTOM_RELEASE_PREFIX,
+        label: `${'custom'.padStart(PADDING, ' ')} ...`,
+    })
 
     const release = await select({
-        message: `Current version ${config.currentVersion}`,
-        options: [
-            { value: 'major', label: `${'major'.padStart(PADDING, ' ')} ${next.major}` },
-            { value: 'minor', label: `${'minor'.padStart(PADDING, ' ')} ${next.minor}` },
-            { value: 'patch', label: `${'patch'.padStart(PADDING, ' ')} ${next.patch}` },
-            { value: 'next', label: `${'next'.padStart(PADDING, ' ')} ${next.next}` },
-            { value: 'rc', label: `${'rc'.padStart(PADDING, ' ')} ${next.rc.replace('rc', pc.green('rc'))}` },
-            {
-                value: 'pre-beta-major',
-                label: `${'pre-beta'.padStart(PADDING, ' ')} ${next['beta-major'].replace('beta', beta)}`,
-            },
-            {
-                value: 'pre-beta-minor',
-                label: `${'pre-beta'.padStart(PADDING, ' ')} ${next['beta-minor'].replace('beta', beta)}`,
-            },
-            {
-                value: 'pre-beta-minor',
-                label: `${'pre-beta'.padStart(PADDING, ' ')} ${next['beta-patch'].replace('beta', beta)}`,
-            },
-            {
-                value: 'pre-beta',
-                label: `${'pre-beta'.padStart(PADDING, ' ')} ${next['pre-beta'].replace('beta', beta)}`,
-            },
-            {
-                value: 'alpha-beta',
-                label: `${'alpha'.padStart(PADDING, ' ')} ${next['alpha-beta'].replace('alpha', alpha)}`,
-            },
-
-            {
-                value: 'alpha-major',
-                label: `${'alpha'.padStart(PADDING, ' ')} ${next['alpha-major'].replace('alpha', alpha)}`,
-            },
-            {
-                value: 'alpha-minor',
-                label: `${'alpha'.padStart(PADDING, ' ')} ${next['alpha-minor'].replace('alpha', alpha)}`,
-            },
-            {
-                value: 'alpha-patch',
-                label: `${'alpha'.padStart(PADDING, ' ')} ${next['alpha-patch'].replace('alpha', alpha)}`,
-            },
-            { value: CUSTOM_RELEASE_PREFIX, label: `${'custom'.padStart(PADDING, ' ')} ...` },
-        ],
+        message: `Current version ${pc.bold(config.currentVersion)}`,
+        options,
         initialValue: 'next',
-    })
+    }) as releaseType | 'custom'
 
     if (isCancel(release)) {
         cancel('No version selected')
         return process.exit(0)
     }
 
+    let finalVersion: string
+
     if (release === CUSTOM_RELEASE_PREFIX) {
-        custom = await text({
+        const custom = await text({
             message: 'Enter the new version number',
-            placeholder: 'e.g. major, minor, patch, pre-alpha, pre-beta, rc, ...',
-        }) as string
+            validate: val => !validateVersion(val) ? 'Invalid semver' : undefined,
+        })
 
         if (isCancel(custom)) {
-            cancel('No version enter')
+            cancel('No version entered')
             return process.exit(0)
         }
+        finalVersion = custom
+    }
+    else {
+        // 这里的 release 已经排除了 CUSTOM 且必定属于 releaseType
+        finalVersion = next[release]
     }
 
-    console.log({
-        release,
-        custom,
-    })
+    console.log(`${pc.green('✔')} New version: ${pc.cyan(finalVersion)}`)
+    return finalVersion
 }

@@ -14,20 +14,3 @@ export interface IConfigOptions {
     }
     packages: string | string[]
 }
-
-export type ReleaseType
-    = | 'major'
-        | 'minor'
-        | 'patch'
-        | 'next'
-        | 'rc'
-        | 'beta-major'
-        | 'beta-minor'
-        | 'beta-patch'
-        | 'pre-beta'
-        | 'alpha-beta'
-        | 'alpha-major'
-        | 'alpha-minor'
-        | 'alpha-patch'
-
-export type VersionResult = Record<ReleaseType, string>
