@@ -1,3 +1,4 @@
+import * as process from 'node:process'
 import { intro, outro } from '@clack/prompts'
 import cac from 'cac'
 import pc from 'picocolors'
@@ -19,6 +20,10 @@ cli.command('')
 
         intro(pc.bgCyan(` dnmp ${version} `))
 
+        if (config.monorepo.is) {
+            outro(pc.yellow('当前暂不支持 monorepo 的版本升级'))
+            process.exit(0)
+        }
         // TODO 获取老的版本号
         await getCurrentVersion(config)
 
