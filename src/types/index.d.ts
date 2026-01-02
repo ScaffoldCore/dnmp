@@ -1,5 +1,3 @@
-import type { CustomReleaseType } from '@/version.ts'
-
 export interface IConfigOptions {
     root: string
     cwd: string
@@ -32,4 +30,4 @@ export type ReleaseType
         | 'alpha-minor'
         | 'alpha-patch'
 
-export type VersionResult = Record<CustomReleaseType, string>
+export type VersionResult = Record<ReleaseType, string>
