@@ -32,7 +32,7 @@ cli.command('')
 
         console.log('npm', [
             'publish',
-            `--//registry.npmjs.org/:_authToken=${config.token}`,
+            `--//registry.npmjs.org/:_authToken=${config.token.value}`,
             '--access',
             'public',
         ].join(' '))
