@@ -4,6 +4,7 @@ import { cancel, isCancel, select, text } from '@clack/prompts'
 import pc from 'picocolors'
 import semver from 'semver'
 import { CUSTOM_RELEASE_PREFIX } from '@/constant.ts'
+import { isCancelProcess } from '@/utils.ts'
 
 // https://semver.org/
 
@@ -118,10 +119,7 @@ export const promptForNewVersion = async (config: IConfigOptions): Promise<strin
         initialValue: 'next',
     }) as releaseType | 'custom'
 
-    if (isCancel(release)) {
-        cancel('No version selected')
-        return process.exit(0)
-    }
+    isCancelProcess(release)
 
     let finalVersion: string
 

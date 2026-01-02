@@ -1,5 +1,7 @@
 import fs from 'node:fs'
+import { cancel, isCancel } from '@clack/prompts'
 import boxen from 'boxen'
+import { CANCEL_PROCESS } from '@/constant.ts'
 
 export const checkDirExist = (dirPath: string) => {
     return fs.existsSync(dirPath)
@@ -18,3 +20,10 @@ export const printWarning = (message: string) =>
         borderStyle: 'round',
         borderColor: 'yellow',
     }))
+
+export const isCancelProcess = (value: unknown, message: string = CANCEL_PROCESS) => {
+    if (isCancel(value)) {
+        cancel(message)
+        return process.exit(0)
+    }
+}
