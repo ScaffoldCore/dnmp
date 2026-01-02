@@ -21,7 +21,7 @@ cli.command('')
 
         // TODO 获取老的版本号
         await getCurrentVersion(config)
-        console.log(config)
+
         // TODO 获取新的版本号
         await promptForNewVersion(config)
 
