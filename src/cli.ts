@@ -1,4 +1,3 @@
-import { readFile, writeFile } from 'node:fs/promises'
 import * as process from 'node:process'
 import { confirm, intro, outro } from '@clack/prompts'
 import cac from 'cac'
@@ -6,6 +5,7 @@ import pc from 'picocolors'
 import { resolveConfig } from '@/config.ts'
 import { gitCommit, gitTags } from '@/git.ts'
 import { setToken } from '@/token.ts'
+import { updateFiles } from '@/update-files.ts'
 import { isCancelProcess, printWarning } from '@/utils.ts'
 import { getCurrentVersion } from '@/version/current.ts'
 import { promptForNewVersion } from '@/version/new.version'
@@ -52,9 +52,7 @@ cli.command('')
         }
 
         // TODO 更新 package.json 相应版本号
-        const updatePackage = JSON.parse(await readFile(config.packages as string, 'utf-8'))
-        updatePackage.version = config.release as string
-        await writeFile(config.packages as string, JSON.stringify(updatePackage, null, 2))
+        await updateFiles(config)
 
         // TODO 提交 Git Commits release 信息
         await gitCommit(config)
