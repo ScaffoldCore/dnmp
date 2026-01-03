@@ -1,8 +1,7 @@
 import * as process from 'node:process'
 import cac from 'cac'
 import { bumpVersion } from '@/command/bump.ts'
-import { resolveConfig } from '@/config.ts'
-import { setToken } from '@/token.ts'
+import { token as setToken } from '@/command/token.ts'
 import { printWarning } from '@/utils.ts'
 import { name, version } from '../package.json'
 
@@ -18,14 +17,7 @@ cli.command('')
 
 cli.command('set <token>', 'Set the local release Token')
     .action(async (token: string = '') => {
-        try {
-            const config = await resolveConfig()
-            await setToken(config, token)
-        }
-        catch (error: any) {
-            printWarning(error.message)
-            process.exit(0)
-        }
+        await setToken(token)
     })
 
 cli.help()
