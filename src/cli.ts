@@ -54,8 +54,6 @@ cli.command('')
         // TODO 更新 package.json 相应版本号
         const updatePackage = JSON.parse(await readFile(config.packages as string, 'utf-8'))
         updatePackage.version = config.release as string
-
-        console.log(updatePackage)
         await writeFile(config.packages as string, JSON.stringify(updatePackage, null, 2))
 
         // TODO 提交 Git Commits release 信息
