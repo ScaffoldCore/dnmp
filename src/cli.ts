@@ -79,7 +79,7 @@ cli.command('set <token>', 'Set the local release Token')
         }
         catch (error: any) {
             printWarning(error.message)
-            process.exit(1)
+            process.exit(0)
         }
     })
 
@@ -91,5 +91,5 @@ try {
 }
 catch (error: any) {
     printWarning(error.message)
-    process.exit(1)
+    process.exit(0)
 }
