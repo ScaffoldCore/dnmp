@@ -4,8 +4,7 @@ import { confirm, intro, outro } from '@clack/prompts'
 import cac from 'cac'
 import pc from 'picocolors'
 import { resolveConfig } from '@/config.ts'
-import { gitCommit } from '@/git.ts'
-import { runCommand } from '@/runCommand.ts'
+import { gitCommit, gitTags } from '@/git.ts'
 import { setToken } from '@/token.ts'
 import { isCancelProcess, printWarning } from '@/utils.ts'
 import { getCurrentVersion } from '@/version/current.ts'
@@ -60,7 +59,7 @@ cli.command('')
         // TODO 提交 Git Commits release 信息
         await gitCommit(config)
         // TODO 创建 Git tag
-        await runCommand(config, 'git', ['tag', '--annotate', '--message', '', `v${config.release}`])
+        await gitTags(config)
         // TODO 发布 NPM
 
         // await runCommand(config, 'npm', [

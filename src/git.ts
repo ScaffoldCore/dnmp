@@ -24,6 +24,21 @@ export const gitCommit = async (config: IConfigOptions) => {
     })
 }
 
+export const gitTags = async (config: IConfigOptions) => {
+    await x('git', [
+        'tag',
+        '--annotate',
+        '--message',
+        '',
+        `v${config.release}`,
+    ], {
+        nodeOptions: {
+            cwd: config.cwd,
+            stdio: 'pipe',
+        },
+    })
+}
+
 export const gitPush = async (config: IConfigOptions) => {
     await x('git', ['push', '--tags'], {
         throwOnError: true,
