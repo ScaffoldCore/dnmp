@@ -83,48 +83,78 @@ const handleMonorepoPackageSelection = async (config: IConfigOptions): Promise<v
     }
 }
 
+/**
+ * 获取缓存文件路径
+ */
+const getCachePath = async (cwd: string): Promise<string | null> => {
+    const path = await findUp('node_modules/.cache/dnmp.ts', {
+        cwd,
+    })
+    return path || null
+}
+
+/**
+ * 读取或设置统一更新版本选项
+ */
+const getOrUpdateAllUpdateVersion = async (config: IConfigOptions): Promise<boolean> => {
+    const cachePath = await getCachePath(config.cwd)
+
+    if (cachePath) {
+        return Boolean(await loaderTs(cachePath))
+    }
+
+    const allUpdateVersion = await confirm({
+        message: '是否以根 package.json 为主版本统一更新 workspace 所有版本',
+        initialValue: true,
+    }) as boolean
+
+    isCancelProcess(allUpdateVersion, CANCEL_PROCESS)
+
+    const cacheFilePath = resolve(config.cwd, './node_modules/.cache/dnmp.ts')
+    await writeFile(cacheFilePath, `export default ${allUpdateVersion}`)
+
+    return allUpdateVersion
+}
+
+/**
+ * 读取包文件内容
+ */
+const readPackageFile = async (filePath: string): Promise<{ version: string }> => {
+    return JSON.parse(await readFile(filePath, 'utf-8')) as { version: string }
+}
+
+/**
+ * 统一更新所有包的版本
+ */
+const updateAllPackagesVersion = async (config: IConfigOptions): Promise<void> => {
+    const pkg = await readPackageFile(config.packages)
+    config.currentVersion = pkg.version
+
+    await promptForNewVersion(config)
+
+    for (const item of config.monorepo.packageContexts) {
+        const resolvePkgPath = resolve(config.cwd, item.file)
+        const packageInfo = await readPackageFile(resolvePkgPath);
+
+        (config.monorepo.updatePackages ??= []).push({
+            name: item.name,
+            path: resolvePkgPath,
+            currentVersion: packageInfo.version,
+            newVersion: config.release,
+        })
+    }
+}
+
 export const bumpVersion = async () => {
     const config = await resolveConfig()
 
     intro(pc.bgCyan(` dnmp ${version} `))
 
     if (config.monorepo.is) {
-        let allUpdateVersion: boolean
-        const cacheAllUpdatePath = await findUp('node_modules/.cache/dnmp.ts', {
-            cwd: config.cwd,
-        })
-
-        if (cacheAllUpdatePath) {
-            allUpdateVersion = Boolean(await loaderTs(cacheAllUpdatePath))
-        }
-        else {
-            allUpdateVersion = await confirm({
-                message: '是否以根 package.json 为主版本统一更新 workspace 所有版本',
-                initialValue: true,
-            }) as boolean
-
-            isCancelProcess(allUpdateVersion, CANCEL_PROCESS)
-
-            await writeFile(resolve(config.cwd, './node_modules/.cache/dnmp.ts'), `export default ${allUpdateVersion}`)
-        }
+        const allUpdateVersion = await getOrUpdateAllUpdateVersion(config)
 
         if (allUpdateVersion) {
-            const pkg = JSON.parse(await readFile(config.packages, 'utf-8'))
-            config.currentVersion = pkg.version
-
-            await promptForNewVersion(config)
-
-            for (const item of config.monorepo.packageContexts) {
-                const resolvePkgPath = resolve(config.cwd, item.file)
-                const currentPkg = JSON.parse(await readFile(resolvePkgPath, 'utf-8'));
-
-                (config.monorepo.updatePackages ??= []).push({
-                    name: item.name,
-                    path: resolvePkgPath,
-                    currentVersion: currentPkg.version,
-                    newVersion: config.release,
-                })
-            }
+            await updateAllPackagesVersion(config)
         }
         else {
             await handleMonorepoPackageSelection(config)
