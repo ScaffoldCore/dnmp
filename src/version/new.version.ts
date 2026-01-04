@@ -83,7 +83,7 @@ export const getNextVersions = (version: string): ReleaseTypes => {
 export async function promptForNewVersion(config: IConfigOptions): Promise<string | void>
 export async function promptForNewVersion(config: IConfigOptions, pkg: IUpdatePackages, index: number): Promise<string | void>
 export async function promptForNewVersion(config: IConfigOptions, pkg?: IUpdatePackages, index?: number): Promise<string | void> {
-    const version = config.monorepo.is && pkg ? pkg.newVersion : config.currentVersion
+    const version = config.monorepo.is && pkg !== undefined ? pkg.newVersion : config.currentVersion
 
     const next = getNextVersions(version)
 

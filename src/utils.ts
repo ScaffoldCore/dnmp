@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import { cancel, isCancel } from '@clack/prompts'
 import boxen from 'boxen'
+import { createJiti } from 'jiti'
 import { CANCEL_PROCESS } from '@/constant.ts'
 
 export const checkDirExist = (dirPath: string) => {
@@ -26,4 +27,9 @@ export const isCancelProcess = (value: unknown, message: string = CANCEL_PROCESS
         cancel(message)
         return process.exit(0)
     }
+}
+
+export const loaderTs = async (path: string): Promise<string> => {
+    const loader = createJiti(path)
+    return await loader.import(path, { default: true })
 }

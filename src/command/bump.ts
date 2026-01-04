@@ -1,12 +1,15 @@
 import type { IConfigOptions, IPackageContexts, IUpdatePackages } from '@/types'
+import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import process from 'node:process'
 import { confirm, intro, outro, select } from '@clack/prompts'
+import { findUp } from 'find-up'
 import pc from 'picocolors'
 import { resolveConfig } from '@/config.ts'
+import { CANCEL_PROCESS } from '@/constant.ts'
 import { gitCommit, gitTags } from '@/git.ts'
 import { updateFiles } from '@/update-files.ts'
-import { isCancelProcess } from '@/utils.ts'
+import { isCancelProcess, loaderTs } from '@/utils.ts'
 import { getCurrentVersion } from '@/version/current.ts'
 import { promptForNewVersion } from '@/version/new.version.ts'
 import { version } from '../../package.json'
@@ -86,7 +89,47 @@ export const bumpVersion = async () => {
     intro(pc.bgCyan(` dnmp ${version} `))
 
     if (config.monorepo.is) {
-        await handleMonorepoPackageSelection(config)
+        let allUpdateVersion: boolean
+        const cacheAllUpdatePath = await findUp('node_modules/.cache/dnmp.ts', {
+            cwd: config.cwd,
+        })
+
+        if (cacheAllUpdatePath) {
+            allUpdateVersion = Boolean(await loaderTs(cacheAllUpdatePath))
+        }
+        else {
+            allUpdateVersion = await confirm({
+                message: '是否以根 package.json 为主版本统一更新 workspace 所有版本',
+                initialValue: true,
+            }) as boolean
+
+            isCancelProcess(allUpdateVersion, CANCEL_PROCESS)
+
+            await writeFile(resolve(config.cwd, './node_modules/.cache/dnmp.ts'), `export default ${allUpdateVersion}`)
+        }
+
+        console.log(cacheAllUpdatePath, allUpdateVersion)
+        if (allUpdateVersion) {
+            const pkg = JSON.parse(await readFile(config.packages, 'utf-8'))
+            config.currentVersion = pkg.version
+
+            await promptForNewVersion(config)
+
+            for (const item of config.monorepo.packageContexts) {
+                const resolvePkgPath = resolve(config.cwd, item.file)
+                const currentPkg = JSON.parse(await readFile(resolvePkgPath, 'utf-8'));
+
+                (config.monorepo.updatePackages ??= []).push({
+                    name: item.name,
+                    path: resolvePkgPath,
+                    currentVersion: currentPkg.version,
+                    newVersion: config.release,
+                })
+            }
+        }
+        else {
+            await handleMonorepoPackageSelection(config)
+        }
     }
     else {
         await getCurrentVersion(config)
