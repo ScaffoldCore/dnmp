@@ -1,9 +1,8 @@
 import type { IConfigOptions } from '@/types'
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { createJiti } from 'jiti'
 import { CACHE_FOLDER_NAME } from '@/constant.ts'
-import { createDir } from '@/utils.ts'
+import { createDir, loaderTs } from '@/utils.ts'
 
 export const setToken = async (config: IConfigOptions, token: string): Promise<void> => {
     createDir(resolve(config.cwd, CACHE_FOLDER_NAME))
@@ -11,6 +10,5 @@ export const setToken = async (config: IConfigOptions, token: string): Promise<v
 }
 
 export const loaderToken = async (config: IConfigOptions): Promise<string> => {
-    const loader = createJiti(config.token.file)
-    return await loader.import(config.token.file, { default: true })
+    return await loaderTs(config.token.file)
 }
