@@ -18,10 +18,8 @@ export const bumpVersion = async () => {
         outro(pc.yellow('当前暂不支持 monorepo 的版本升级'))
         process.exit(0)
     }
-    // TODO 获取老的版本号
-    await getCurrentVersion(config)
 
-    // TODO 获取新的版本号
+    await getCurrentVersion(config)
     await promptForNewVersion(config)
 
     console.log('npm', [
@@ -43,14 +41,10 @@ export const bumpVersion = async () => {
         return process.exit(0)
     }
 
-    // TODO 更新 package.json 相应版本号
     await updateFiles(config)
 
-    // TODO 提交 Git Commits release 信息
     await gitCommit(config)
-    // TODO 创建 Git tag
     await gitTags(config)
-    // TODO 发布 NPM
 
     // await runCommand(config, 'npm', [
     //     'publish',
