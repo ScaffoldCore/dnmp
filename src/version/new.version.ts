@@ -144,7 +144,6 @@ export async function promptForNewVersion(config: IConfigOptions, pkg?: IUpdateP
         finalVersion = next[release]
     }
 
-    console.log(`${pc.green('✔')} New version: ${pc.cyan(finalVersion)}`)
     if (
         config.monorepo.is
         && pkg !== undefined

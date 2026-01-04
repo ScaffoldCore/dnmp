@@ -49,9 +49,7 @@ export const bumpVersion = async () => {
 
             (config.monorepo.updatePackages ??= []).push(resolvePackage)
 
-            console.log('如果要往后续新增的话，key 是:', config.monorepo.updatePackages.length - 1)
             selectedPackages.push(selectedPackage)
-            outro(pc.cyan(`已选择: ${selectedPackage}`))
 
             await promptForNewVersion(config, resolvePackage, config.monorepo.updatePackages.length - 1)
 
@@ -70,8 +68,6 @@ export const bumpVersion = async () => {
                 }
             }
         }
-
-        outro(`总共选择了 ${selectedPackages.length} 个包`)
     }
     else {
         await getCurrentVersion(config)
