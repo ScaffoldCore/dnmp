@@ -35,15 +35,41 @@ export const bumpVersion = async () => {
             }
         })
 
-        // 让用户选择要升级的包
-        const selectedPackage = await select({
-            message: '请选择要升级版本的包:',
-            options,
-        }) as string
+        // 选择需要升级的包 - loop
+        let availableOptions = [...options]
+        const selectedPackages: string[] = []
 
-        isCancelProcess(selectedPackage)
+        while (availableOptions.length > 0) {
+            const selectedPackage = await select({
+                message: '请选择要升级版本的包:',
+                options: availableOptions,
+            }) as string
 
-        outro(pc.cyan(`已选择: ${selectedPackage}`))
+            isCancelProcess(selectedPackage)
+
+            selectedPackages.push(selectedPackage)
+            const selectedInfo = options.find(opt => opt.value === selectedPackage)
+
+            outro(pc.cyan(`已选择: ${selectedInfo?.label || selectedPackage}`))
+
+            // 从可用选项中移除已选择的包
+            availableOptions = availableOptions.filter(opt => opt.value !== selectedPackage)
+
+            if (availableOptions.length > 0) {
+                const continueSelection = await confirm({
+                    message: '是否继续选择其他包?',
+                    initialValue: true,
+                })
+                isCancelProcess(continueSelection)
+
+                if (!continueSelection) {
+                    break
+                }
+            }
+        }
+
+        outro(`总共选择了 ${selectedPackages.length} 个包`)
+
         return process.exit(0)
     }
 
