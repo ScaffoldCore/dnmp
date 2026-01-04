@@ -1,8 +1,9 @@
-import type { IConfigOptions } from '@/types'
+import type { IConfigOptions, IPackage } from '@/types'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import * as process from 'node:process'
 import { findUp } from 'find-up'
+import { glob } from 'glob'
 import { parse } from 'yaml'
 import { CACHE_TOKEN_FILE_PATH } from '@/constant.ts'
 import { loaderToken } from '@/token.ts'
@@ -23,8 +24,21 @@ const defaultConfig: IConfigOptions = {
     monorepo: {
         is: false,
         workspacePath: '',
+        packages: [],
+        packageContexts: [],
+        updatePackages: [],
     },
     packages: '',
+}
+
+const collectPackageFiles = async (config: IConfigOptions, packages: string[]) => {
+    const files = ['package.json']
+    files.push(...await glob(packages, {
+        cwd: config.cwd,
+        ignore: ['**/node_modules/**'],
+    }))
+
+    return [...files]
 }
 
 export const isMonorepo = async (
@@ -38,9 +52,36 @@ export const isMonorepo = async (
 
     const is = !!workspaceYaml?.packages.length
 
+    const { packages: workSpacePackages } = parse(readFileSync(workspacePath, 'utf-8'))
+
+    let packages = []
+    let packageContexts: any[] = []
+    if (workSpacePackages) {
+        packages = workSpacePackages.map(
+            (item: string) =>
+                item.indexOf('*')
+                    ? `${item.replace('/*', '')}/**/package.json`
+                    : `${item}/**/package.json`,
+        )
+
+        const packageFiles = await collectPackageFiles(config, packages)
+        packageContexts = packageFiles.map((file) => {
+            const files = JSON.parse(readFileSync(resolve(config.cwd, file), 'utf-8')) as IPackage
+
+            return {
+                name: `${files.name}`,
+                file,
+                version: files?.version || '',
+                context: files,
+            }
+        })
+    }
+
     return {
         is,
         workspacePath,
+        packageContexts,
+        packages,
     }
 }
 
@@ -60,20 +101,7 @@ export const resolveConfig = async (): Promise<IConfigOptions> => {
 
     config.monorepo = await isMonorepo(config)
 
-    // loader monorepo packages name and path, if is
-    if (config.monorepo.is) {
-        const packages = parse(readFileSync(config.monorepo.workspacePath, 'utf-8'))
-
-        config.packages = packages.packages.map(
-            (item: string) =>
-                item.indexOf('*')
-                    ? `${item.replace('/*', '')}/**/package.json`
-                    : `${item}/**/package.json`,
-        )
-    }
-    else {
-        config.packages = resolve(config.cwd, 'package.json')
-    }
+    config.packages = resolve(config.cwd, 'package.json')
 
     return config
 }

@@ -1,5 +1,4 @@
 import type { IConfigOptions } from '@/types'
-import { basename } from 'node:path'
 import { x } from 'tinyexec'
 
 export const gitCommit = async (config: IConfigOptions) => {
@@ -9,12 +8,12 @@ export const gitCommit = async (config: IConfigOptions) => {
 
     args.push('--allow-empty')
 
-    if (typeof config.packages === 'object') {
-        args.push(config.packages.map(r => basename(r)).join(' '))
-    }
-    else {
-        args.push(config.packages)
-    }
+    // if (typeof config.packages === 'object') {
+    //     args.push(config.packages.map(r => basename(r)).join(' '))
+    // }
+    // else {
+    args.push(config.packages)
+    // }
 
     await x('git', ['commit', ...args], {
         nodeOptions: {

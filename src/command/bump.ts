@@ -1,8 +1,7 @@
-import { readFileSync } from 'node:fs'
+import type { IPackageContexts, IUpdatePackages } from '@/types'
 import { resolve } from 'node:path'
 import process from 'node:process'
 import { confirm, intro, outro, select } from '@clack/prompts'
-import { glob } from 'glob'
 import pc from 'picocolors'
 import { resolveConfig } from '@/config.ts'
 import { gitCommit, gitTags } from '@/git.ts'
@@ -19,19 +18,11 @@ export const bumpVersion = async () => {
 
     // TODO 如果 config.monorepo.is 为 true 则执行 monorepo 相关操作
     if (config.monorepo.is) {
-        const packages = ['package.json']
-        packages.push(...await glob(config.packages, {
-            cwd: config.cwd,
-            ignore: ['**/node_modules/**'],
-        }))
-
-        const options = packages.map((file) => {
-            const files = JSON.parse(readFileSync(resolve(config.cwd, file), 'utf-8'))
-
+        const options = config.monorepo.packageContexts.map((file) => {
             return {
-                value: file,
-                label: `${files.name}`,
-                hint: `${pc.red(files.version)} - ${file}`,
+                value: file.name,
+                label: file.name,
+                hint: `${pc.red(file.version)} - ${file.file}`,
             }
         })
 
@@ -47,10 +38,22 @@ export const bumpVersion = async () => {
 
             isCancelProcess(selectedPackage)
 
-            selectedPackages.push(selectedPackage)
-            const selectedInfo = options.find(opt => opt.value === selectedPackage)
+            const selectPackage = config.monorepo.packageContexts.find(opt => opt.name === selectedPackage) as IPackageContexts
 
-            outro(pc.cyan(`已选择: ${selectedInfo?.label || selectedPackage}`))
+            const resolvePackage: IUpdatePackages = {
+                name: selectedPackage,
+                path: resolve(config.cwd, selectPackage.file),
+                currentVersion: selectPackage.version,
+                newVersion: selectPackage.version,
+            };
+
+            (config.monorepo.updatePackages ??= []).push(resolvePackage)
+
+            console.log('如果要往后续新增的话，key 是:', config.monorepo.updatePackages.length - 1)
+            selectedPackages.push(selectedPackage)
+            outro(pc.cyan(`已选择: ${selectedPackage}`))
+
+            await promptForNewVersion(config, resolvePackage, config.monorepo.updatePackages.length - 1)
 
             // 从可用选项中移除已选择的包
             availableOptions = availableOptions.filter(opt => opt.value !== selectedPackage)

@@ -1,5 +1,5 @@
 import type { releaseType, ReleaseTypes } from '@/release-type.ts'
-import type { IConfigOptions } from '@/types'
+import type { IConfigOptions, IUpdatePackages } from '@/types'
 import { cancel, isCancel, select, text } from '@clack/prompts'
 import pc from 'picocolors'
 import semver from 'semver'
@@ -80,8 +80,12 @@ export const getNextVersions = (version: string): ReleaseTypes => {
     }
 }
 
-export async function promptForNewVersion(config: IConfigOptions): Promise<string | void> {
-    const next = getNextVersions(config.currentVersion)
+export async function promptForNewVersion(config: IConfigOptions): Promise<string | void>
+export async function promptForNewVersion(config: IConfigOptions, pkg: IUpdatePackages, index: number): Promise<string | void>
+export async function promptForNewVersion(config: IConfigOptions, pkg?: IUpdatePackages, index?: number): Promise<string | void> {
+    const version = config.monorepo.is && pkg ? pkg.newVersion : config.currentVersion
+
+    const next = getNextVersions(version)
 
     // 动态生成选项
     const options = (Object.keys(next) as releaseType[]).map((key) => {
@@ -114,7 +118,7 @@ export async function promptForNewVersion(config: IConfigOptions): Promise<strin
     })
 
     const release = await select({
-        message: `Current version ${pc.bold(config.currentVersion)}`,
+        message: `Current version ${pc.bold(version)}`,
         options,
         initialValue: 'next',
     }) as releaseType | 'custom'
@@ -141,5 +145,15 @@ export async function promptForNewVersion(config: IConfigOptions): Promise<strin
     }
 
     console.log(`${pc.green('✔')} New version: ${pc.cyan(finalVersion)}`)
-    config.release = finalVersion
+    if (
+        config.monorepo.is
+        && pkg !== undefined
+        && index !== undefined
+        && Array.isArray(config.monorepo.updatePackages)
+    ) {
+        config.monorepo.updatePackages[index]!.newVersion = finalVersion
+    }
+    else {
+        config.release = finalVersion
+    }
 }
