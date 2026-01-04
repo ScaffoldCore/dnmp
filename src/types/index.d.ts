@@ -10,7 +10,7 @@ export interface IConfigOptions {
     currentVersion: string
     monorepo: {
         is: boolean
-        path: string
+        workspacePath: string
     }
     packages: string | string[]
 }
