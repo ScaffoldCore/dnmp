@@ -1,4 +1,4 @@
-import type { IPackageContexts, IUpdatePackages } from '@/types'
+import type { IConfigOptions, IPackageContexts, IUpdatePackages } from '@/types'
 import { resolve } from 'node:path'
 import process from 'node:process'
 import { confirm, intro, outro, select } from '@clack/prompts'
@@ -11,60 +11,82 @@ import { getCurrentVersion } from '@/version/current.ts'
 import { promptForNewVersion } from '@/version/new.version.ts'
 import { version } from '../../package.json'
 
+/**
+ * 创建包选择选项
+ */
+const createPackageOptions = (packageContexts: IPackageContexts[]) => {
+    return packageContexts.map((file) => {
+        return {
+            value: file.name,
+            label: file.name,
+            hint: `${pc.red(file.version)} - ${file.file}`,
+        }
+    })
+}
+
+/**
+ * 处理单个包的选择流程
+ */
+const processPackageSelection = async (
+    config: IConfigOptions,
+    selectedPackageName: string,
+    packageContexts: IPackageContexts[],
+): Promise<void> => {
+    const selectedPackage = packageContexts.find(opt => opt.name === selectedPackageName) as IPackageContexts
+
+    const resolvePackage: IUpdatePackages = {
+        name: selectedPackageName,
+        path: resolve(config.cwd, selectedPackage.file),
+        currentVersion: selectedPackage.version,
+        newVersion: selectedPackage.version,
+    };
+
+    (config.monorepo.updatePackages ??= []).push(resolvePackage)
+
+    await promptForNewVersion(config, resolvePackage, config.monorepo.updatePackages.length - 1)
+}
+
+/**
+ * 处理 monorepo 包的选择逻辑
+ */
+const handleMonorepoPackageSelection = async (config: IConfigOptions): Promise<void> => {
+    const options = createPackageOptions(config.monorepo.packageContexts)
+    let availableOptions = [...options]
+
+    while (availableOptions.length > 0) {
+        const selectedPackage = await select({
+            message: '请选择要升级版本的包:',
+            options: availableOptions,
+        }) as string
+
+        isCancelProcess(selectedPackage)
+
+        await processPackageSelection(config, selectedPackage, config.monorepo.packageContexts)
+
+        // 从可用选项中移除已选择的包
+        availableOptions = availableOptions.filter(opt => opt.value !== selectedPackage)
+
+        if (availableOptions.length > 0) {
+            const continueSelection = await confirm({
+                message: '是否继续选择其他包?',
+                initialValue: true,
+            })
+            isCancelProcess(continueSelection)
+
+            if (!continueSelection) {
+                break
+            }
+        }
+    }
+}
+
 export const bumpVersion = async () => {
     const config = await resolveConfig()
 
     intro(pc.bgCyan(` dnmp ${version} `))
 
-    // TODO 如果 config.monorepo.is 为 true 则执行 monorepo 相关操作
     if (config.monorepo.is) {
-        const options = config.monorepo.packageContexts.map((file) => {
-            return {
-                value: file.name,
-                label: file.name,
-                hint: `${pc.red(file.version)} - ${file.file}`,
-            }
-        })
-
-        // 选择需要升级的包 - loop
-        let availableOptions = [...options]
-
-        while (availableOptions.length > 0) {
-            const selectedPackage = await select({
-                message: '请选择要升级版本的包:',
-                options: availableOptions,
-            }) as string
-
-            isCancelProcess(selectedPackage)
-
-            const selectPackage = config.monorepo.packageContexts.find(opt => opt.name === selectedPackage) as IPackageContexts
-
-            const resolvePackage: IUpdatePackages = {
-                name: selectedPackage,
-                path: resolve(config.cwd, selectPackage.file),
-                currentVersion: selectPackage.version,
-                newVersion: selectPackage.version,
-            };
-
-            (config.monorepo.updatePackages ??= []).push(resolvePackage)
-
-            await promptForNewVersion(config, resolvePackage, config.monorepo.updatePackages.length - 1)
-
-            // 从可用选项中移除已选择的包
-            availableOptions = availableOptions.filter(opt => opt.value !== selectedPackage)
-
-            if (availableOptions.length > 0) {
-                const continueSelection = await confirm({
-                    message: '是否继续选择其他包?',
-                    initialValue: true,
-                })
-                isCancelProcess(continueSelection)
-
-                if (!continueSelection) {
-                    break
-                }
-            }
-        }
+        await handleMonorepoPackageSelection(config)
     }
     else {
         await getCurrentVersion(config)
