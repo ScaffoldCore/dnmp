@@ -108,7 +108,6 @@ export const bumpVersion = async () => {
             await writeFile(resolve(config.cwd, './node_modules/.cache/dnmp.ts'), `export default ${allUpdateVersion}`)
         }
 
-        console.log(cacheAllUpdatePath, allUpdateVersion)
         if (allUpdateVersion) {
             const pkg = JSON.parse(await readFile(config.packages, 'utf-8'))
             config.currentVersion = pkg.version
