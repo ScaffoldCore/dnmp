@@ -80,7 +80,7 @@ export const getNextVersions = (version: string): ReleaseTypes => {
     }
 }
 
-export async function promptForNewVersion(config: IConfigOptions, packages: string[]): Promise<string | void> {
+export async function promptForNewVersion(config: IConfigOptions): Promise<string | void> {
     const next = getNextVersions(config.currentVersion)
 
     // 动态生成选项
