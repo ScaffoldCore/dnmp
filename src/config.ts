@@ -1,4 +1,4 @@
-import type { IConfigOptions, IPackage } from '@/types'
+import type { IConfigOptions, IPackage, IPackageContexts } from '@/types'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import * as process from 'node:process'
@@ -48,6 +48,15 @@ export const isMonorepo = async (
         cwd: config.cwd,
     }) as string
 
+    if (!workspacePath) {
+        return {
+            is: false,
+            workspacePath: '',
+            packageContexts: [],
+            packages: [],
+        }
+    }
+
     const workspaceYaml = workspacePath ? parse(readFileSync(workspacePath, 'utf-8')) : { packages: [] }
 
     const is = !!workspaceYaml?.packages.length
@@ -55,7 +64,7 @@ export const isMonorepo = async (
     const { packages: workSpacePackages } = parse(readFileSync(workspacePath, 'utf-8'))
 
     let packages = []
-    let packageContexts: any[] = []
+    let packageContexts: IPackageContexts[] = []
     if (workSpacePackages) {
         packages = workSpacePackages.map(
             (item: string) =>
@@ -74,7 +83,7 @@ export const isMonorepo = async (
                 version: files?.version || '',
                 context: files,
             }
-        })
+        }) as IPackageContexts[]
     }
 
     return {
