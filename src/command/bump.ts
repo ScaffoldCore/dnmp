@@ -72,12 +72,11 @@ export const bumpVersion = async () => {
         }
 
         outro(`总共选择了 ${selectedPackages.length} 个包`)
-
-        return process.exit(0)
     }
-
-    await getCurrentVersion(config)
-    await promptForNewVersion(config)
+    else {
+        await getCurrentVersion(config)
+        await promptForNewVersion(config)
+    }
 
     console.log('npm', [
         'publish',
