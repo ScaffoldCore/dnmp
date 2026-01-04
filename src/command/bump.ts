@@ -28,7 +28,6 @@ export const bumpVersion = async () => {
 
         // 选择需要升级的包 - loop
         let availableOptions = [...options]
-        const selectedPackages: string[] = []
 
         while (availableOptions.length > 0) {
             const selectedPackage = await select({
@@ -48,8 +47,6 @@ export const bumpVersion = async () => {
             };
 
             (config.monorepo.updatePackages ??= []).push(resolvePackage)
-
-            selectedPackages.push(selectedPackage)
 
             await promptForNewVersion(config, resolvePackage, config.monorepo.updatePackages.length - 1)
 
