@@ -1,5 +1,8 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import process from 'node:process'
-import { confirm, intro, outro } from '@clack/prompts'
+import { confirm, intro, outro, select } from '@clack/prompts'
+import { glob } from 'glob'
 import pc from 'picocolors'
 import { resolveConfig } from '@/config.ts'
 import { gitCommit, gitTags } from '@/git.ts'
@@ -14,9 +17,34 @@ export const bumpVersion = async () => {
 
     intro(pc.bgCyan(` dnmp ${version} `))
 
+    // TODO 如果 config.monorepo.is 为 true 则执行 monorepo 相关操作
     if (config.monorepo.is) {
-        outro(pc.yellow('当前暂不支持 monorepo 的版本升级'))
-        process.exit(0)
+        const packages = ['package.json']
+        packages.push(...await glob(config.packages, {
+            cwd: config.cwd,
+            ignore: ['**/node_modules/**'],
+        }))
+
+        const options = packages.map((file) => {
+            const files = JSON.parse(readFileSync(resolve(config.cwd, file), 'utf-8'))
+
+            return {
+                value: file,
+                label: `${files.name}`,
+                hint: `${pc.red(files.version)} - ${file}`,
+            }
+        })
+
+        // 让用户选择要升级的包
+        const selectedPackage = await select({
+            message: '请选择要升级版本的包:',
+            options,
+        }) as string
+
+        isCancelProcess(selectedPackage)
+
+        outro(pc.cyan(`已选择: ${selectedPackage}`))
+        return process.exit(0)
     }
 
     await getCurrentVersion(config)
