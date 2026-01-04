@@ -150,6 +150,11 @@ export const bumpVersion = async () => {
 
     intro(pc.bgCyan(` dnmp ${version} `))
 
+    if (!config.token.value) {
+        outro('请先设置 release token')
+        return process.exit(0)
+    }
+
     if (config.monorepo.is) {
         const allUpdateVersion = await getOrUpdateAllUpdateVersion(config)
 
