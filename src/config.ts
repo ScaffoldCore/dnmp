@@ -59,7 +59,7 @@ export const isMonorepo = async (
 
     const workspaceYaml = workspacePath ? parse(readFileSync(workspacePath, 'utf-8')) : { packages: [] }
 
-    const is = !!workspaceYaml?.packages.length
+    const is = !!workspaceYaml?.packages?.length || false
 
     const { packages: workSpacePackages } = parse(readFileSync(workspacePath, 'utf-8'))
 
