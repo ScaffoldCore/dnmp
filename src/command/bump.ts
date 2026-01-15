@@ -8,6 +8,7 @@ import pc from 'picocolors'
 import { resolveConfig } from '@/config.ts'
 import { CANCEL_PROCESS } from '@/constant.ts'
 import { gitCommit, gitTags } from '@/git.ts'
+import { runCommand } from '@/runCommand.ts'
 import { updateFiles } from '@/update-files.ts'
 import { isCancelProcess, loaderTs } from '@/utils.ts'
 import { getCurrentVersion } from '@/version/current.ts'
@@ -170,13 +171,6 @@ export const bumpVersion = async () => {
         await promptForNewVersion(config)
     }
 
-    console.log('npm', [
-        'publish',
-        `--//registry.npmjs.org/:_authToken=${config.token.value}`,
-        '--access',
-        'public',
-    ].join(' '))
-
     const isConfirmUpdate = await confirm({
         message: '是否确认更新 package.json ?',
         initialValue: true,
@@ -194,12 +188,12 @@ export const bumpVersion = async () => {
     await gitCommit(config)
     await gitTags(config)
 
-    // await runCommand(config, 'npm', [
-    //     'publish',
-    //     `--//registry.npmjs.org/:_authToken=${config.token}`,
-    //     '--access',
-    //     'public',
-    // ])
+    await runCommand(config, 'npm', [
+        'publish',
+        `--//registry.npmjs.org/:_authToken=${config.token.value}`,
+        '--access',
+        'public',
+    ])
 
     outro('Done.')
 }
