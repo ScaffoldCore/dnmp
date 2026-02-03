@@ -5,7 +5,6 @@ import * as process from 'node:process'
 import { findUp } from 'find-up'
 import { glob } from 'glob'
 import { parse } from 'yaml'
-import { CACHE_TOKEN_FILE_PATH } from '@/constant.ts'
 import { loaderToken } from '@/token.ts'
 import { name } from '../package.json'
 
@@ -14,11 +13,7 @@ const CURRENT_PATH = resolve(import.meta.dirname, '../')
 const defaultConfig: IConfigOptions = {
     root: '',
     cwd: '',
-    token: {
-        name: 'token.ts',
-        file: resolve(CURRENT_PATH, `${CACHE_TOKEN_FILE_PATH}`),
-        value: '',
-    },
+    token: '',
     release: '',
     currentVersion: '',
     monorepo: {
@@ -106,7 +101,7 @@ export const resolveConfig = async (): Promise<IConfigOptions> => {
         root: CURRENT_PATH,
     }))
 
-    config.token.value = await loaderToken(config) || ''
+    config.token = await loaderToken(config) || ''
 
     config.monorepo = await isMonorepo(config)
 

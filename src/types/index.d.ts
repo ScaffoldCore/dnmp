@@ -21,11 +21,7 @@ export interface IUpdatePackages {
 export interface IConfigOptions {
     root: string
     cwd: string
-    token: {
-        name: string
-        file: string
-        value: string
-    }
+    token: string
     release: string
     currentVersion: string
     monorepo: {

@@ -151,7 +151,7 @@ export const bumpVersion = async () => {
 
     intro(pc.bgCyan(` dnmp ${version} `))
 
-    if (!config.token.value) {
+    if (!config.token) {
         outro('请先设置 release token')
         return process.exit(0)
     }
@@ -190,7 +190,7 @@ export const bumpVersion = async () => {
 
     await runCommand(config, 'npm', [
         'publish',
-        `--//registry.npmjs.org/:_authToken=${config.token.value}`,
+        `--//registry.npmjs.org/:_authToken=${config.token}`,
         '--access',
         'public',
     ])
