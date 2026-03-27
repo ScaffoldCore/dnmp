@@ -1,6 +1,7 @@
 import type { releaseType, ReleaseTypes } from '@/release-type.ts'
 import type { IConfigOptions, IUpdatePackages } from '@/types'
 import { cancel, isCancel, select, text } from '@clack/prompts'
+import dayjs from 'dayjs'
 import pc from 'picocolors'
 import semver from 'semver'
 import { CUSTOM_RELEASE_PREFIX } from '@/constant.ts'
@@ -77,6 +78,7 @@ export const getNextVersions = (version: string): ReleaseTypes => {
         'alpha-major': processIncrementalPre(pre, base, 'alpha', 2, 'alpha.1'),
         'alpha-minor': processIncrementalPre(pre, base, 'alpha', 3, 'alpha.0.1'),
         'alpha-patch': processIncrementalPre(pre, base, 'alpha', 4, 'alpha.0.0.1'),
+        'date-version': `${base}-${dayjs().format('YYYYMMDD')}-${dayjs().format('HHmmss')}`,
     }
 }
 

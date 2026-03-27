@@ -16,5 +16,6 @@ export type releaseType
         | 'alpha-major'
         | 'alpha-minor'
         | 'alpha-patch'
+        | 'date-version'
 
 export type ReleaseTypes = Record<releaseType, string>
